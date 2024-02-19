@@ -1,0 +1,8 @@
+(library
+ (name interp))
+
+(ocamlyacc
+ (modules parser))
+
+(ocamllex 
+ (modules lexer))
