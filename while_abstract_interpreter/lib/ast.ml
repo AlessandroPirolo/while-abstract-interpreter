@@ -4,6 +4,7 @@ type aexpr =
         | Var of string
         | ABinOp of aexpr * string * aexpr
         | IncDec of string * string
+        | Neg of string
 
 (* Abstract syntax tree for boolean expressions *)
 type bexpr = 
@@ -19,13 +20,13 @@ type statement =
         | Composition of statement * statement
         | Conditional of bexpr * statement * statement
         | While of bexpr * statement
-        | Repeat of statement * bexpr
-        
+
 let rec to_string_a = function
         | AConst n -> string_of_int n
-        | Var s ->  
+        | Var s ->  s
         | ABinOp (a1, s, a2) -> "ABinOp (\n\t" ^ to_string_a a1 ^ ", " ^ s ^ ", \n\t" ^ to_string_a a2 ^ "\n\t)"
         | IncDec (s, s1) -> "IncDec (" ^ s ^ ", " ^ s1 ^ ")"
+        | Neg s -> "-" ^ s
 
 let rec to_string_b = function 
         | BConst true -> "true"
@@ -40,4 +41,3 @@ let rec to_string = function
         | Composition (e1, e2) -> "Composition ( \n\t" ^ to_string e1 ^ ", \n\t" ^ to_string e2 ^ "\n\t)"
         | Conditional (b, e1, e2) -> "Conditional (" ^ to_string_b b ^  ", \n\t" ^ to_string e1 ^ ", \n\t" ^ to_string e2 ^ "\n\t)"
         | While (b, s) -> "While (" ^ to_string_b b ^ ", \n\t" ^ to_string s ^ "\n\t)"
-        | Repeat (s, b) ->  "Repeat (\n\t" ^ to_string s ^ ", \n\t" ^ to_string_b b ^ "\n\t)"
