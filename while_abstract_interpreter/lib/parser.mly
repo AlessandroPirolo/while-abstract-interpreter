@@ -1,7 +1,5 @@
 %{
-
     open Ast
-
 %}
 
 %token <int> INT
@@ -28,28 +26,28 @@ prog:
 seq_expr
     : statement                                      { $1 }
     | START_STMT seq_expr END_STMT              { $2 }
-    | seq_expr COMP seq_expr                    { Composition ($1, $3) }
+    | seq_expr COMP seq_expr                    { Ast.Composition ($1, $3) }
 
 
 statement
-    : IF bexpr THEN statement ELSE statement              { Conditional ($2, $4, $6) }
-    | WHILE bexpr DO statement                       { While ($2, $4) }
-    | STRING ASSIGN aexpr                            { Assignment ($1, $3) }
-    | SKIP                                      { Skip }
+    : IF bexpr THEN statement ELSE statement              { Ast.Conditional ($2, $4, $6) }
+    | WHILE bexpr DO statement                       { Ast.While ($2, $4) }
+    | STRING ASSIGN aexpr                            { Ast.Assignment ($1, $3) }
+    | SKIP                                      { Ast.Skip }
     | START_STMT seq_expr END_STMT              { $2 }
 
 bexpr
-    : bexpr AND bexpr               { BBinOp ($1, "&&", $3) }
-    | bexpr OR bexpr                { BBinOp ($1, "||", $3) }
-    | NOT bexpr                     { BUnOp ("!", $2) }
-    | TRUE                          { BConst (true) }
-    | FALSE                         { BConst (false) }
-    | aexpr LEQ aexpr               { BoolRelation ($1, "<=", $3) }
-    | aexpr GEQ aexpr               { BoolRelation ($1, ">=", $3) }
-    | aexpr EQ aexpr                { BoolRelation ($1, "=", $3) }
-    | aexpr LT aexpr                { BoolRelation ($1, "<", $3) }
-    | aexpr GT aexpr                { BoolRelation ($1, ">", $3) }
-    | aexpr NEQ aexpr               { BoolRelation ($1, "!=", $3) }
+    : bexpr AND bexpr               { Ast.BBinOp ($1, "&&", $3) }
+    | bexpr OR bexpr                { Ast.BBinOp ($1, "||", $3) }
+    | NOT bexpr                     { Ast.BUnOp ("!", $2) }
+    | TRUE                          { Ast.BConst (true) }
+    | FALSE                         { Ast.BConst (false) }
+    | aexpr LEQ aexpr               { Ast.BoolRelation ($1, "<=", $3) }
+    | aexpr GEQ aexpr               { Ast.BoolRelation ($1, ">=", $3) }
+    | aexpr EQ aexpr                { Ast.BoolRelation ($1, "=", $3) }
+    | aexpr LT aexpr                { Ast.BoolRelation ($1, "<", $3) }
+    | aexpr GT aexpr                { Ast.BoolRelation ($1, ">", $3) }
+    | aexpr NEQ aexpr               { Ast.BoolRelation ($1, "!=", $3) }
     | START_STMT bexpr END_STMT     { $2 }
 
 aexpr

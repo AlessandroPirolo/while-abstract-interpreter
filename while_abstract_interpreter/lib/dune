@@ -4,5 +4,5 @@
 (ocamlyacc
  (modules parser))
 
-(ocamllex 
+(ocamllex
  (modules lexer))
