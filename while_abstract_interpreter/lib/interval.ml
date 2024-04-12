@@ -74,4 +74,14 @@ module Interval = struct
 
   let abstract_inc x = x + Interval (Num 1, Num 1)
   let abstract_dec x = x - Interval (Num 1, Num 1)
+
+  let widening x y = 
+    match (x,y) with 
+    | Interval (a, b), Interval(c, d) ->
+        let f = if a <= c then a else Number.MinInf in
+        let s = if b>=d then b else Number.PlusInf in
+        Interval (f, s)
+    | Interval (_,_), (Empty|Z) -> x
+    | (Empty|Z), Interval (_,_) -> y
+    | _, _ -> x
 end

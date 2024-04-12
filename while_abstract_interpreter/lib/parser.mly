@@ -35,6 +35,8 @@ statement
     | STRING ASSIGN aexpr                            { Ast.Assignment ($1, $3) }
     | SKIP                                      { Ast.Skip }
     | START_STMT seq_expr END_STMT              { $2 }
+    | STRING INC                    { Ast.IncDec ($1, "++")}
+    | STRING DEC                    { Ast.IncDec ($1, "--")}
 
 bexpr
     : bexpr AND bexpr               { Ast.BBinOp ($1, "&&", $3) }
@@ -51,14 +53,12 @@ bexpr
     | START_STMT bexpr END_STMT     { $2 }
 
 aexpr
-    : aexpr PLUS aexpr              { ABinOp ($1, "+", $3) }
-    | aexpr MINUS aexpr             { ABinOp ($1, "-", $3) }
-    | aexpr MULT aexpr              { ABinOp ($1, "*", $3) }
-    | aexpr DIV aexpr               { ABinOp ($1, "/", $3) }
-    | STRING INC                    { IncDec ($1, "++")}
-    | STRING DEC                    { IncDec ($1, "--")}
-    | MINUS STRING                  { Neg ($2) }
-    | INT                           { AConst ($1) }
-    | STRING                        { Var ($1) }
+    : aexpr PLUS aexpr              { Ast.ABinOp ($1, "+", $3) }
+    | aexpr MINUS aexpr             { Ast.ABinOp ($1, "-", $3) }
+    | aexpr MULT aexpr              { Ast.ABinOp ($1, "*", $3) }
+    | aexpr DIV aexpr               { Ast.ABinOp ($1, "/", $3) }
+    | MINUS STRING                  { Ast.Neg ($2) }
+    | INT                           { Ast.AConst ($1) }
+    | STRING                        { Ast.Var ($1) }
     | START_STMT aexpr END_STMT     { $2 }
 
