@@ -1,13 +1,20 @@
 {
 
-(*open Ast*)
+open System
+open FSharp.Text.Lexing
+
+open Ast
 open Parser
+
+let lexeme lexbuf = LexBuffer<_>.LexemeString lexbuf
+let newline (lexbuf: LexBuffer<_>) = lexbuf.EndPos <- lexbuf.EndPos.NextLine
 exception Eof 
 
 }
 
 let whitespace = [' ' '\t' ]
 let digit = ['0'-'9'] 
+let newline = ('\n' | "\r\n")
 let int = ['-']?digit+
 let idbody = ['a'-'z' 'A'-'Z' '0'-'9' '_']*['\'']*	
 let Uid = ['A'-'Z'] idbody
@@ -17,7 +24,8 @@ let id = Uid | Lid
 rule tokenize = parse 
     whitespace    { tokenize lexbuf }  
     | eof            { EOF }
-    
+    | newline           { newline lexbuf; tokenize lexbuf }
+
     | '+'			{ PLUS }
 	| '-'			{ MINUS }
 	| '*'			{ MULT }
@@ -49,6 +57,9 @@ rule tokenize = parse
     | "skip"        { SKIP }
 
 	(* identifiers *)
-	| id    { STRING (Lexing.lexeme lexbuf) }
-    | int   { INT (int_of_string (Lexing.lexeme lexbuf)) }
+	| id    { STRING (lexeme lexbuf) }
+    | int                   { INT (Int32.Parse (lexeme lexbuf)) }
+    | _                     { lexeme lexbuf |> sprintf "Parsing error: %s" |> failwith }
+
+
     

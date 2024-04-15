@@ -1,4 +1,0 @@
-(executable
- (public_name while_abstract_interpreter)
- (name main)
- (libraries interp))
