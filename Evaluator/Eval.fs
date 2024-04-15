@@ -25,8 +25,8 @@ let rec eval (stmt : Statement) (state : State) (states : State list) : State =
 
       let f = eval expr2 false_cond [] in
 
-      //union t f
-      t
+      union t f
+      
   | IncDec (op, e) -> (
       let value = find e state in
       match op with
