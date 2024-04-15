@@ -8,32 +8,33 @@ open EvalAexpr
 exception Error of string
 
 let rec eval (stmt : Statement) (state : State) (states : State list) : State =
+  printfn "%O" state
   match stmt with
   | Skip -> state
   | Composition (expr1, expr2) ->
-      let state1 = eval expr1 state states in
+      let state1 = eval expr1 state states
       eval expr2 state1 (states @ [ state1 ])
   | Assignment (str, aexpr) ->
-      let res = eval_aexpr aexpr state in
-      let new_state = add str res state in
+      let res = eval_aexpr aexpr state 
+      let new_state = add str res state
+      
       new_state
   | Conditional (cond, expr1, expr2) ->
-      let true_cond = eval_bexpr cond state in
-      let false_cond = eval_bexpr (Ast.BUnOp ("!", cond)) state in
+      let true_cond = eval_bexpr cond state 
+      let false_cond = eval_bexpr (BUnOp ("!", cond)) state 
+      let t = eval expr1 true_cond [] 
 
-      let t = eval expr1 true_cond [] in
-
-      let f = eval expr2 false_cond [] in
-
+      let f = eval expr2 false_cond [] 
+      
       union t f
       
-  | IncDec (op, e) -> (
-      let value = find e state in
+  | IncDec (op, e) -> 
+      let value = find e state 
       match op with
       | "++" -> add e (value.AbstractInc) state
       | "--" -> add e (value.AbstractDec) state
       | _ -> state
-     )
+     
   | While (_, _) -> 
       (* B[-b](lfp(fun x -> s V (D[S]oB[b])x )) *)
       (*let b = eval_bexpr cond state in

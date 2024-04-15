@@ -116,3 +116,9 @@ with
                 | h :: t -> if h <= m then find_max t m else find_max t h
             let m = List.head l
             find_max l m
+
+        member this.ToString =
+            match this with
+            | Num n -> string n
+            | MinInf -> "-\U221E"
+            | PlusInf -> "\U221E"

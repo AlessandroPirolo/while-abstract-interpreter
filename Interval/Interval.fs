@@ -7,7 +7,7 @@ type Interval =
     | Empty 
     | Z
     with 
-        (* Operations on interval *)
+        (* Pointwise union *)
         static member lub x y =
             match (x, y) with
             | Interval (a, b), Interval (c, d) -> Interval (min a c, max b d)
@@ -82,4 +82,9 @@ type Interval =
             | Interval (_,_), (Empty|Z) -> x
             | (Empty|Z), Interval (_,_) -> y
             | _, _ -> x
-end
+
+        member this.ToString = 
+            match this with
+            | Interval (a, b) -> "[" + a.ToString + ", " + b.ToString + "]" 
+            | Empty -> "Ø"
+            | Z -> "T"

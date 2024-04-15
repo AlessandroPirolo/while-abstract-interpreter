@@ -16,8 +16,8 @@ let rec eval_bexpr (expr : Bexpr) (state : State) : State =
       | "!" -> eval_neg e state
       | _ -> raise (Error "Unknown unary operator!")
   | BBinOp (e1, op, e2) -> 
-      let res1 = eval_bexpr e1 state in
-      let res2 = eval_bexpr e2 state in
+      let res1 = eval_bexpr e1 state
+      let res2 = eval_bexpr e2 state
       match op with
       | "&&" -> intersect res1 res2
       | "||" -> union res1 res2 
@@ -55,22 +55,22 @@ and eval_bool_rel (aexpr1: Aexpr) (op: string) (aexpr2 : Aexpr) (state : State) 
         match (aexpr1, aexpr2) with
           | AConst x, AConst y -> if x = y then state else Map.empty
           | Var x, Var y -> 
-              let res1 = eval_aexpr aexpr1 state in
-              let res2 = eval_aexpr aexpr2 state in
+              let res1 = eval_aexpr aexpr1 state
+              let res2 = eval_aexpr aexpr2 state
               match (res1, res2) with
               | Interval (a, b), Interval (c, d) ->
                   if d < a then Map.empty
                   else if c > b then Map.empty
                   else
-                    let res = Interval.glb res1 res2 in 
-                    let s = add x res state in
+                    let res = Interval.glb res1 res2
+                    let s = add x res state
                     add y res s 
               | _ -> state
           | Var x, AConst c -> 
-              let res = eval_aexpr aexpr1 state in
+              let res = eval_aexpr aexpr1 state
               match res with
               | Interval (a, b) ->
-                  let constInt = Interval(Num c, Num c) in
+                  let constInt = Interval(Num c, Num c)
                   if a > Num c then Map.empty
                   else
                     if Num (c) > b then Map.empty
@@ -78,10 +78,10 @@ and eval_bool_rel (aexpr1: Aexpr) (op: string) (aexpr2 : Aexpr) (state : State) 
                       add x (Interval.glb res constInt) state
               | _ -> state
           | AConst c, Var x -> 
-              let res = eval_aexpr aexpr2 state in
+              let res = eval_aexpr aexpr2 state 
               match res with
               | Interval (a, b) ->
-                  let constInt = Interval(Num c, Num c) in
+                  let constInt = Interval(Num c, Num c)
                   if a > Num c then Map.empty
                   else if Num (c) > b then Map.empty
                   else 
@@ -92,15 +92,15 @@ and eval_bool_rel (aexpr1: Aexpr) (op: string) (aexpr2 : Aexpr) (state : State) 
           match (aexpr1, aexpr2) with
           | AConst x, AConst y -> if x <> y then state else Map.empty
           | Var _, Var _ -> 
-              let res1 = eval_aexpr aexpr1 state in
-              let res2 = eval_aexpr aexpr2 state in
+              let res1 = eval_aexpr aexpr1 state
+              let res2 = eval_aexpr aexpr2 state 
               match (res1, res2) with
               | Interval (a, b), Interval (c, d) -> 
                   if a != c || b != d then state
                   else Map.empty
               | _ -> state
           | Var x, AConst c -> 
-              let res = eval_aexpr aexpr1 state in
+              let res = eval_aexpr aexpr1 state
               match res with 
               | Interval (a, b) ->
                   if a < Num c && Num c < b then 
@@ -127,23 +127,23 @@ and eval_bool_rel (aexpr1: Aexpr) (op: string) (aexpr2 : Aexpr) (state : State) 
               let res2 = eval_aexpr aexpr2 state
               match (res1, res2) with
               | Interval (a, b), Interval (c, d) ->
-                  if b <= c then Map.empty
+                  if b <=. c then Map.empty
                   else
                     let s = add x (Interval (Number.max [a; c], b)) state in
                     add y (Interval (c,Number.min [b; d])) s
               | _ -> state
           | Var x, AConst c -> 
-              let res = eval_aexpr aexpr2 state in
+              let res = eval_aexpr aexpr1 state
               match res with
               | Interval (a, b) ->
-                  if Num c >= b then Map.empty
+                  if b <=. Num c then Map.empty
                   else add x (Interval (Number.max [a; Num c], b)) state
               | _ -> state
           | AConst c, Var x -> 
-              let res = eval_aexpr aexpr2 state in
+              let res = eval_aexpr aexpr2 state 
               match res with
               | Interval (a, b) ->
-                  if a >= Num c then Map.empty
+                  if Num c <=. a then Map.empty
                   else add x (Interval (a, Number.min [b; Num c])) state
               | _ -> state
           | _ -> state
@@ -153,27 +153,27 @@ and eval_bool_rel (aexpr1: Aexpr) (op: string) (aexpr2 : Aexpr) (state : State) 
           match (aexpr1, aexpr2) with
           | AConst x, AConst y -> if x <= y then state else Map.empty
           | Var x, Var y -> 
-              let res1 = eval_aexpr aexpr1 state in
-              let res2 = eval_aexpr aexpr2 state in
+              let res1 = eval_aexpr aexpr1 state 
+              let res2 = eval_aexpr aexpr2 state 
               match (res1, res2) with
               | Interval (a, b), Interval (c, d) ->
-                  if a > d then Map.empty
+                  if a >. d then Map.empty
                   else
-                    let s = add x (Interval (a, Number.min [ b; d ])) state in
+                    let s = add x (Interval (a, Number.min [ b; d ])) state 
                     add y (Interval (Number.max [ c; a ], d)) s
               | _ -> state
           | Var x, AConst c -> 
-              let res = eval_aexpr aexpr1 state in
+              let res = eval_aexpr aexpr1 state
               match res with
               | Interval (a, b) ->
-                  if a > Num c then Map.empty
+                  if a >. Num c then Map.empty
                   else add x (Interval (a, Number.min [ b; Num c ])) state
               | _ -> state
           | AConst c, Var x -> 
-              let res = eval_aexpr aexpr2 state in
+              let res = eval_aexpr aexpr2 state 
               match res with
               | Interval (a, b) ->
-                  if b < Num c then Map.empty
+                  if Num c >. b then Map.empty
                   else add x (Interval (Number.max [ a; Num c ], b)) state
               | _ -> state
           | _ -> state
