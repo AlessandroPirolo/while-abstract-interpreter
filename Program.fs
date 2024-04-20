@@ -11,7 +11,7 @@ let parse (ds : string) : Statement  =
     
 [<EntryPoint>]
 let main argv =
-    let program =  "y:= 3; x := 1; \n if x > 1 then x := 3 else x := 2" 
+    let program =  "x := 1; \n while x < 9 do x++" 
     
     let stmt = parse program
     printfn "%s" stmt.ToString
