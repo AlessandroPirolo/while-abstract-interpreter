@@ -70,6 +70,17 @@ type Interval =
                     Interval.lub (x / Interval.glb y y1) (x / Interval.glb y y2)
             | _, _ -> Empty
 
+        static member (=.) (x, y) =
+            match (x, y) with
+            | Interval (a, b), Interval (c, d) -> 
+                if a =. c && b =. d then true else false 
+            | Empty, Empty 
+            | Z, Z -> true
+            | Empty, Z 
+            | Z, Empty 
+            | Interval (_,_), _ 
+            | _, Interval (_,_) -> false 
+
         member this.AbstractInc = this + Interval (Num 1, Num 1)
         member this.AbstractDec = this - Interval (Num 1, Num 1)
 

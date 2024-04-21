@@ -1,5 +1,7 @@
 module Number
 
+open System
+
 exception Error of string
 
 type Number = 
@@ -97,10 +99,22 @@ with
             | Num _, MinInf 
             | PlusInf, MinInf 
             | PlusInf, Num _ 
+            | Num _, PlusInf -> true
+            | MinInf, MinInf 
+            | PlusInf, PlusInf -> false
+ 
+        static member ( =. ) (n1, n2) =
+            match (n1, n2) with
+            | Num n1, Num n2 -> n1 = n2
+            | MinInf, PlusInf 
+            | MinInf, Num _ 
+            | Num _, MinInf 
+            | PlusInf, MinInf 
+            | PlusInf, Num _ 
             | Num _, PlusInf -> false
             | MinInf, MinInf 
             | PlusInf, PlusInf -> true
- 
+
         static member min l =
             let rec find_min l m =
                 match l with
@@ -120,5 +134,5 @@ with
         member this.ToString =
             match this with
             | Num n -> string n
-            | MinInf -> "-\U221E"
-            | PlusInf -> "\U221E"
+            | MinInf -> string(Double.NegativeInfinity)
+            | PlusInf -> string(Double.PositiveInfinity)

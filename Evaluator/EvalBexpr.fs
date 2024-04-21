@@ -59,8 +59,8 @@ and eval_bool_rel (aexpr1: Aexpr) (op: string) (aexpr2 : Aexpr) (state : State) 
               let res2 = eval_aexpr aexpr2 state
               match (res1, res2) with
               | Interval (a, b), Interval (c, d) ->
-                  if d < a then Map.empty
-                  else if c > b then Map.empty
+                  if a >. d then Map.empty
+                  else if c >. b then Map.empty
                   else
                     let res = Interval.glb res1 res2
                     let s = add x res state
@@ -71,9 +71,9 @@ and eval_bool_rel (aexpr1: Aexpr) (op: string) (aexpr2 : Aexpr) (state : State) 
               match res with
               | Interval (a, b) ->
                   let constInt = Interval(Num c, Num c)
-                  if a > Num c then Map.empty
+                  if a >. Num c then Map.empty
                   else
-                    if Num (c) > b then Map.empty
+                    if Num (c) >. b then Map.empty
                     else 
                       add x (Interval.glb res constInt) state
               | _ -> state
@@ -82,8 +82,8 @@ and eval_bool_rel (aexpr1: Aexpr) (op: string) (aexpr2 : Aexpr) (state : State) 
               match res with
               | Interval (a, b) ->
                   let constInt = Interval(Num c, Num c)
-                  if a > Num c then Map.empty
-                  else if Num (c) > b then Map.empty
+                  if a >. Num c then Map.empty
+                  else if Num c >. b then Map.empty
                   else 
                       add x (Interval.glb res constInt) state
               | _ -> state
@@ -103,14 +103,14 @@ and eval_bool_rel (aexpr1: Aexpr) (op: string) (aexpr2 : Aexpr) (state : State) 
               let res = eval_aexpr aexpr1 state
               match res with 
               | Interval (a, b) ->
-                  if a < Num c && Num c < b then 
+                  if Num c >. a && b >. Num c then 
                     Map.empty
-                  else if Num c < a || Num c >. b then state
+                  else if a >. Num c || Num c >. b then state
                   else 
-                      if Num c = a && Num c < b then 
+                      if Num c =. a && b >. Num c then 
                         add x (Interval((Num 1 + a), b)) state
                       else 
-                        if Num c = b && Num c >. a then 
+                        if Num c =. b && Num c >. a then 
                           add x (Interval(a, (b - Num 1))) state
                         else 
                           state
