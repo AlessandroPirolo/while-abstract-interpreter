@@ -11,8 +11,7 @@ type Aexpr =
         | AConst n -> n.ToString()
         | Var s -> s
         | ABinOp (a1, s, a2) ->
-            "ABinOp (\n\t" + a1.ToString + ", " + s + ", \n\t" + a2.ToString
-            + "\n\t)"
+            a1.ToString +  s  + a2.ToString
         | Neg s -> "-" + s
 
 (* Abstract syntax tree for boolean expressions *)
@@ -25,13 +24,11 @@ type Bexpr =
         match this with
         | BConst true -> "true"
         | BConst false -> "false"
-        | BUnOp (s, b) -> "BUnOp (" + s + ", " + b.ToString + ")"
+        | BUnOp (s, b) -> "!" + b.ToString
         | BBinOp (b1, s, b2) ->
-            "BBinOp (\n\t" + b1.ToString + ", " + s + ", \n\t" + b2.ToString
-            + "\n\t)"
+            b1.ToString + s + b2.ToString
         | BoolRelation (b1, s, b2) ->
-            "BoolRelation (\n\t" + b1.ToString + ", " + s + ", \n\t"
-            + b2.ToString + "\n\t)"
+            b1.ToString  + s + b2.ToString
 
 (* Abstract syntax tree for the operations *)
 type Statement =
@@ -43,13 +40,13 @@ type Statement =
   | IncDec of string * string
   with member this.ToString =
         match this with
-        | Assignment (s, a) -> "Assignment (" + s + ", " + a.ToString + ")"
-        | Skip -> "Skip"
+        | Assignment (s, a) -> s + " := " + a.ToString
+        | Skip -> "skip"
         | Composition (e1, e2) ->
-            "Composition ( \n\t" + e1.ToString + ", \n\t" + e2.ToString + "\n\t)"
+            e1.ToString + ";\n" + e2.ToString
         | Conditional (b, e1, e2) ->
-            "Conditional (" + b.ToString + ", \n\t" + e1.ToString + ", \n\t"
-            + e2.ToString + "\n\t)"
+            "if " + b.ToString + " then \n\t " + e1.ToString + "\nelse \n\t"
+            + e2.ToString + "\n"
         | While (b, s) ->
-            "While (" + b.ToString + ", \n\t" + s.ToString + "\n\t)"
-        | IncDec (s, a) -> "IncDec (" + s + ", " + a + ")"
+            "while " + b.ToString + " do " + s.ToString + "\n"
+        | IncDec (e, op) -> e + op 
