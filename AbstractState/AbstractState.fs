@@ -6,12 +6,16 @@ open Ast
 type State = Map<string,Interval>
 
 let add (k : string) (v : Interval) (m : State) : State = Map.add k v m
-let find (k : string) (m : State) : Interval = Map.find k m
+let find (k : string) (m : State) : Interval = 
+    match Map.tryFind k m with 
+    | Some v -> v
+    | None -> failwithf "%s not found" k
+
 let isEmpty m = Map.isEmpty m
 let exists (k : string) (m : State) : bool = Map.exists (fun k1 _ -> k1 = k) m
 let union (m1 : State) (m2 : State) : State = (m1, m2) ||> Map.fold (fun acc k v -> if exists k acc then add k (Interval.lub v (find k acc)) acc else add k v acc )
 let intersect m1 m2 = Map.fold (fun acc k v -> if exists k m2 then add k v acc else acc) Map.empty m1
-let widening s1 s2 = s1
+let widening s1 s2 = Map.fold (fun acc k v -> if exists k acc then add k (Interval.widening (find k acc) v) acc else acc) s1 s2
 
 let init_state (stmt : Statement) : State =
     let rec find_var stmt = 
