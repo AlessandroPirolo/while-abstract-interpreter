@@ -11,12 +11,13 @@ let parse (ds : string) : Statement  =
     
 [<EntryPoint>]
 let main argv =
-    let program =  "x := 1; \n while x < 9 do x++" 
+    let program =  "x := 1; \n while x > 9 do x++" 
     
     let stmt = parse program
     printfn "%s" stmt.ToString
     let initial_state = init_state stmt
     printfn "initial state %s" (to_string initial_state)
-    let result = eval stmt initial_state [initial_state]
+    let result, states = eval stmt initial_state [initial_state]
+    printfn "iterations: %A" (List.map (fun s -> to_string s + "\n") states)
     printfn "result %s" (to_string result)
     0
