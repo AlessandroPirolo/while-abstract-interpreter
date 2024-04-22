@@ -42,16 +42,19 @@ let rec eval (stmt : Statement) (state : State) (states : State list) : State * 
       let b = eval_bexpr bexpr state
        
       let mutable fixpoint = false 
-      let mutable prev_state, _ = eval expr b []  
-      let mutable succ_state = prev_state 
+      let mutable prev_state = state  
+      let mutable succ_state, _ = eval expr b []
       while not fixpoint do 
-        let nb = eval_bexpr bexpr prev_state 
-        succ_state <- fst(eval expr nb [])
         let un = union prev_state succ_state
+        printfn "un is %s" (to_string un)
         let wide = widening prev_state un
+        printfn "wide is %s" (to_string wide)
+        let nb = eval_bexpr bexpr succ_state
+        succ_state <- fst(eval expr nb [])
         if wide = un then
           fixpoint <- true
         else
           prev_state <- wide
-      printfn "succ state %s" (to_string succ_state)
-      (eval_bexpr (BUnOp("!", bexpr)) succ_state, [])
+
+      printfn "succ state %s" (to_string prev_state)
+      (eval_bexpr (BUnOp("!", bexpr)) prev_state, [])

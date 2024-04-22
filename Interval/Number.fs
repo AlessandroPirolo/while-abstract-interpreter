@@ -115,19 +115,19 @@ with
             | MinInf, MinInf 
             | PlusInf, PlusInf -> true
 
-        static member min l =
+        static member min (l : Number list) =
             let rec find_min l m =
                 match l with
                 | [] -> m
-                | h :: t -> if h <= m then find_min t h else find_min t m
+                | h :: t -> if h <=. m then find_min t h else find_min t m
             let m = List.head l
             find_min l m
 
-        static member max l =
+        static member max (l : Number list) =
             let rec find_max l m =
                 match l with
                 | [] -> m
-                | h :: t -> if h <= m then find_max t m else find_max t h
+                | h :: t -> if h <=. m then find_max t m else find_max t h
             let m = List.head l
             find_max l m
 

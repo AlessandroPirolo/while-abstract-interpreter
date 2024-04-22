@@ -13,7 +13,7 @@ let find (k : string) (m : State) : Interval =
 
 let isEmpty m = Map.isEmpty m
 let exists (k : string) (m : State) : bool = Map.exists (fun k1 _ -> k1 = k) m
-let union (m1 : State) (m2 : State) : State = (m1, m2) ||> Map.fold (fun acc k v -> if exists k acc then add k (Interval.lub v (find k acc)) acc else add k v acc )
+let union (m1 : State) (m2 : State) : State = (m1, m2) ||> Map.fold (fun acc k v -> if exists k acc then add k (Interval.lub (find k acc) v) acc else add k v acc )
 let intersect m1 m2 = Map.fold (fun acc k v -> if exists k m2 then add k v acc else acc) Map.empty m1
 let widening s1 s2 = Map.fold (fun acc k v -> if exists k acc then add k (Interval.widening (find k acc) v) acc else acc) s1 s2
 

@@ -10,7 +10,7 @@ type Interval =
         (* Pointwise union *)
         static member lub x y =
             match (x, y) with
-            | Interval (a, b), Interval (c, d) -> Interval (min a c, max b d)
+            | Interval (a, b), Interval (c, d) -> Interval (Number.min [a; c], Number.max [b; d])
             | _, _ -> Empty
 
         static member glb x y =
@@ -92,6 +92,14 @@ type Interval =
                 Interval (f, s)
             | Interval (_,_), (Empty|Z) -> x
             | (Empty|Z), Interval (_,_) -> y
+            | _, _ -> x
+
+        static member narrowing x y =
+            match (x,y) with 
+            | Interval (a, b), Interval(c, d) ->
+                let f = if a =. Number.MinInf then c else a in
+                let s = if b =. Number.PlusInf then d else b in
+                Interval (f, s)
             | _, _ -> x
 
         member this.ToString = 
