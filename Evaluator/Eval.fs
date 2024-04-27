@@ -40,7 +40,7 @@ let rec eval (stmt : Statement) (state : State) (states : State list) : State * 
   | While (bexpr, expr) -> 
       (* B[-b](lfp(fun x -> s V (D[S]oB[b])x )) *)
       let b = eval_bexpr bexpr state
-       
+      printfn "b is %s" (to_string b)
       let mutable fixpoint = false 
       let mutable prev_state = state  
       let mutable succ_state, _ = eval expr b []

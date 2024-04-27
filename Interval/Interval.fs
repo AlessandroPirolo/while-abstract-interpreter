@@ -87,8 +87,14 @@ type Interval =
         static member widening x y = 
             match (x,y) with 
             | Interval (a, b), Interval(c, d) ->
-                let f = if a <= c then a else Number.MinInf in
-                let s = if b>=d then b else Number.PlusInf in
+                let f = 
+                    if a <=. c then a 
+                    else if Num 0 <=. c &&  a >. c then Num 0
+                    else Number.MinInf 
+                let s = 
+                    if d <=. b then b 
+                    else if b <=. Num 0 && b >. d then Num 0 
+                    else Number.PlusInf 
                 Interval (f, s)
             | Interval (_,_), (Empty|Z) -> x
             | (Empty|Z), Interval (_,_) -> y
