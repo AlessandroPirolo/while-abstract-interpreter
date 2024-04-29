@@ -129,22 +129,22 @@ and eval_bool_rel (aexpr1: Aexpr) (op: string) (aexpr2 : Aexpr) (state : State) 
               | Interval (a, b), Interval (c, d) ->
                   if b <=. c then Map.empty
                   else
-                    let s = add x (Interval (Number.max [a; c], b)) state in
-                    add y (Interval (c,Number.min [b; d])) s
+                    let s = add x (Interval (Number.max [a; c + Num 1], b)) state // check
+                    add y (Interval (c,Number.min [b - Num 1; d])) s  // Check
               | _ -> state
           | Var x, AConst c -> 
               let res = eval_aexpr aexpr1 state
               match res with
               | Interval (a, b) ->
                   if b <=. Num c then Map.empty
-                  else add x (Interval (Number.max [a; Num c], b)) state
+                  else add x (Interval (Number.max [a; Num c + Num 1], b)) state // check
               | _ -> state
           | AConst c, Var x -> 
               let res = eval_aexpr aexpr2 state 
               match res with
               | Interval (a, b) ->
                   if Num c <=. a then Map.empty
-                  else add x (Interval (a, Number.min [b; Num c])) state
+                  else add x (Interval (a, Number.min [b; Num c - Num 1])) state // check
               | _ -> state
           | _ -> state
       | ">=" -> eval_bexpr (BoolRelation (aexpr2, "<=", aexpr1)) state
@@ -167,7 +167,7 @@ and eval_bool_rel (aexpr1: Aexpr) (op: string) (aexpr2 : Aexpr) (state : State) 
               match res with
               | Interval (a, b) ->
                   if a >. Num c then Map.empty
-                  else add x (Interval (a, Number.min [ b; Num c ])) state
+                  else add x (Interval (a, Number.min [ b; Num c ])) state  
               | _ -> state
           | AConst c, Var x -> 
               let res = eval_aexpr aexpr2 state 
