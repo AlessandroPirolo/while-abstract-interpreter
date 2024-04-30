@@ -40,21 +40,35 @@ let rec eval (stmt : Statement) (state : State) (states : State list) : State * 
   | While (bexpr, expr) -> 
       (* B[-b](lfp(fun x -> s V (D[S]oB[b])x )) *)
       let b = eval_bexpr bexpr state
-      printfn "b is %s" (to_string b)
+      //printfn "b is %s" (to_string b)
       let mutable fixpoint = false 
-      let mutable prev_state = state  
-      let mutable succ_state, _ = eval expr b []
+      let mutable prev_state = b  
+      let mutable succ_state, c = eval expr b []
+
       while not fixpoint do 
         let un = union prev_state succ_state
-        printfn "un is %s" (to_string un)
-        let wide = widening prev_state un
-        printfn "wide is %s" (to_string wide)
-        let nb = eval_bexpr bexpr succ_state
+        //printfn "prev_state is %s" (to_string prev_state)
+
+        //printfn "un is %s" (to_string un)
+
+        let wide = widening1 prev_state un
+        //printfn "wide is %s" (to_string wide)
+        let nb = eval_bexpr bexpr un
+        //printfn "nb is %s" (to_string nb)
+
         succ_state <- fst(eval expr nb [])
+        //printfn "succ is %s" (to_string succ_state)
+
+        c <- snd(eval expr nb [])
+        
         if wide = un then
           fixpoint <- true
         else
           prev_state <- wide
+          
+      //printfn "prev is %s" (to_string prev_state)
+      let post_cond = eval_bexpr (BUnOp("!", bexpr)) prev_state
+      //printfn "post is %s" (to_string post_cond)
 
-      printfn "succ state %s" (to_string prev_state)
-      (eval_bexpr (BUnOp("!", bexpr)) prev_state, [])
+      let nar = narrowing post_cond succ_state
+      (nar, [])

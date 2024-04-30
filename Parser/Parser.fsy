@@ -57,7 +57,7 @@ aexpr
     | aexpr MINUS aexpr             { ABinOp ($1, "-", $3) }
     | aexpr MULT aexpr              { ABinOp ($1, "*", $3) }
     | aexpr DIV aexpr               { ABinOp ($1, "/", $3) }
-    | MINUS STRING                  { Neg ($2) }
+    | MINUS aexpr                   { Neg ($2) }
     | INT                           { AConst ($1) }
     | STRING                        { Var ($1) }
     | START_STMT aexpr END_STMT     { $2 }

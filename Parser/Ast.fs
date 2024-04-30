@@ -5,14 +5,14 @@ type Aexpr =
   | AConst of int
   | Var of string
   | ABinOp of Aexpr * string * Aexpr
-  | Neg of string
+  | Neg of Aexpr
   with member this.ToString = 
         match this with
         | AConst n -> n.ToString()
         | Var s -> s
         | ABinOp (a1, s, a2) ->
             a1.ToString +  s  + a2.ToString
-        | Neg s -> "-" + s
+        | Neg s -> "-" + s.ToString
 
 (* Abstract syntax tree for boolean expressions *)
 type Bexpr =
