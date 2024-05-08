@@ -24,10 +24,9 @@
 		</FsLex>
     <Compile Include="Parser/Parser.fsi" />
     <Compile Include="Parser/Parser.fs" />
-    <Compile Include="Parser/Lexer.fs"/>
+    <Compile Include="Parser/Lexer.fs" />
     <Compile Include="AbstractState/AbstractState.fs" />
-    <Compile Include="Evaluator/EvalAexpr.fs" />
-    <Compile Include="Evaluator/EvalBexpr.fs" />
+    <Compile Include="Interval/IntervalDomain.fs" />
     <Compile Include="Evaluator/Eval.fs" />
     <Compile Include="Program.fs" />
 

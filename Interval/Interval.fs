@@ -129,3 +129,6 @@ type Interval =
             | Interval (a, b) -> "[" + a.ToString + ", " + b.ToString + "]" 
             | Empty -> "Ø"
             | Z -> "T"
+
+
+
