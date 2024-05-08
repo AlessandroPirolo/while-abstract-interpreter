@@ -9,6 +9,8 @@
   <PropertyGroup>
     <FsYaccOutputFolder>$(IntermediateOutputPath)Parser/</FsYaccOutputFolder>
     <FsLexOutputFolder>$(IntermediateOutputPath)Parser/</FsLexOutputFolder>
+    <BaseOutputPath>C:\Users\pirol\Documents\GitHub\while-abstract-interpreter</BaseOutputPath>
+    <AssemblyName>Interpreter</AssemblyName>
   </PropertyGroup>
   
   
