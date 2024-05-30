@@ -56,5 +56,4 @@ let rec eval (stmt : Statement) (state : State) (domain : IntervalDomain) : Stat
       let exit_cond = domain.eval_bexpr (BUnOp("!", bexpr)) curr
       let nar = narrowing exit_cond succ
 
-
       (nar, [inv])

@@ -6,7 +6,3 @@ Set-Location (Split-Path $projectPath)
 
 # Build the project using dotnet build
 dotnet build $projectPath
-
-# Move executable 
-rm .\WhileAbstractInterpreter.exe
- mv .\bin\Debug\net7.0\WhileAbstractInterpreter.exe ..\while-abstract-interpreter\

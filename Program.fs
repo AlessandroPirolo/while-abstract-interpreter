@@ -30,16 +30,17 @@ let main argv =
         if argv.[0] = "help" then
             printfn "For running the interpreter do: WhileAbstractInterpreter.exe [name of text file containing the program] [lower bound] [upper bound]"
         else
-            let program = System.IO.File.ReadAllText argv.[0]
-            let stmt = parse program
             let lb = if argv.Length > 1 then Num (Parse argv.[1]) else MinInf
             let ub = if argv.Length > 2 then Num (Parse argv.[2]) else PlusInf 
             let domain = new IntervalDomain(lb, ub)
+            let program = if argv.[0].Contains ".txt" then System.IO.File.ReadAllText argv.[0] else argv.[0]
+         
+            let stmt = parse program
             let initial_state = init_state stmt
             printfn "initial state %s" (to_string initial_state)
             let result, inv = eval stmt initial_state domain
             printfn "result %s" (to_string result)
-            printfn "%s" (invariants_to_string inv)
+            printfn "%s" (invariants_to_string inv)   
     else
         printfn "Type \"help\" after calling the program"
     0
