@@ -38,7 +38,8 @@ type Statement =
   | Conditional of Bexpr * Statement * Statement
   | While of Bexpr * Statement
   | IncDec of string * string
-  with member this.ToString =
+  with 
+    member this.ToString =
         match this with
         | Assignment (s, a) -> s + " := " + a.ToString
         | Skip -> "skip"
@@ -48,5 +49,13 @@ type Statement =
             "if " + b.ToString + " then \n\t " + e1.ToString + "\nelse \n\t"
             + e2.ToString + "\n"
         | While (b, s) ->
-            "while " + b.ToString + " do " + s.ToString + "\n"
+            "while " + b.ToString + " do {\n" + s.ToString + " }\n"
         | IncDec (e, op) -> e + op 
+    member this.ToList =
+        let l = []
+        match this with
+        | Composition (e1, e2) ->
+            l @ e1.ToList @ e2.ToList
+        | Conditional (_, e1, e2) -> l @ e1.ToList @ e2.ToList
+        | While (_, s) -> l @ [this]
+        | _ -> l @ [this]

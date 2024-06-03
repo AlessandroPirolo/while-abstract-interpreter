@@ -22,17 +22,25 @@ type Interval =
             | _, _ -> Empty
 
         static member ( ~- ) i =
-            match i with Interval (a, b) -> Interval (-b, -a) | _ -> Empty
+            match i with 
+            | Interval (a, b) -> Interval (-b, -a) 
+            | Empty -> Empty
+            | Z 
+            | _ -> Z
 
         static member ( + ) (x, y) =
             match (x, y) with
             | Interval (a, b), Interval (c, d) -> Interval (a + c, b + d)
-            | _, _ -> Empty
+            | Empty, _ -> Empty
+            | Z, _ 
+            | _,_ -> Z
 
         static member ( - ) (x, y) =
             match (x, y) with
             | Interval (a, b), Interval (c, d) -> Interval (a - d, b - c)
-            | _, _ -> Empty
+            | Empty, _ -> Empty
+            | Z, _ 
+            | _,_ -> Z
 
         static member ( * ) (x, y) =
             match (x, y) with
@@ -46,7 +54,9 @@ type Interval =
                 let ma = Number.max [ ac; ad; bc; bd ] in
 
                 Interval (mi, ma)
-            | _, _ -> Empty
+            | Empty, _ -> Empty
+            | Z, _ 
+            | _,_ -> Z
 
         static member ( / ) (x, y) =
             match (x, y) with
@@ -68,7 +78,9 @@ type Interval =
                     let y1 = Interval (Num 1, PlusInf) 
                     let y2 = Interval (MinInf, Num (-1)) 
                     Interval.lub (x / Interval.glb y y1) (x / Interval.glb y y2)
-            | _, _ -> Empty
+            | Empty, _ -> Empty
+            | Z, _ 
+            | _,_ -> Z
 
         static member (=.) (x, y) =
             match (x, y) with
@@ -83,52 +95,6 @@ type Interval =
 
         member this.AbstractInc = this + Interval (Num 1, Num 1)
         member this.AbstractDec = this - Interval (Num 1, Num 1)
-
-        static member widening x y = 
-            match (x,y) with 
-            | Interval (a, b), Interval(c, d) ->
-                let f = 
-                    if a <=. c then a 
-                    else if Num 0 <=. c &&  a >. c then Num 0
-                    else Number.MinInf 
-                let s = 
-                    if d <=. b then b 
-                    else if b <=. Num 0 && b >. d then Num 0 
-                    else Number.PlusInf 
-                Interval (f, s)
-            | Interval (_,_), (Empty|Z) -> x
-            | (Empty|Z), Interval (_,_) -> y
-            | _, _ -> x
-
-        static member widening1 x y = 
-            match (x,y) with 
-            | Interval (a, b), Interval(c, d) ->
-                let f = 
-                    if a <=. c then a 
-                    else MinInf
-                let s = 
-                    if d <=. b then b 
-                    else PlusInf
-                Interval (f, s)
-            | Interval (_,_), (Empty|Z) -> x
-            | (Empty|Z), Interval (_,_) -> y
-            | _, _ -> x
-
-        static member narrowing x y =
-            match (x,y) with 
-            | Interval (a, b), Interval(c, d) ->
-                let f = if a =. Number.MinInf then c else a in
-                let s = if b =. Number.PlusInf then d else b in
-                Interval (f, s)
-            | Interval (_,_), (Empty|Z) -> x
-            | (Empty|Z), Interval (_,_) -> y
-            | _, _ -> x
-
-        member this.ToString = 
-            match this with
-            | Interval (a, b) -> "[" + a.ToString + ", " + b.ToString + "]" 
-            | Empty -> "Ø"
-            | Z -> "T"
 
 
 

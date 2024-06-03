@@ -13,9 +13,14 @@
   
   
   <ItemGroup>
+    
     <Compile Include="Parser/Ast.fs" />
-    <Compile Include="Interval/Number.fs" />
-    <Compile Include="Interval/Interval.fs" />
+    <Compile Include="Interval/AbstractDomain.fs" />
+    <Compile Include="Interval/SignDomain/Sign.fs" />
+    <Compile Include="Interval/SignDomain/SignDomain.fs" />
+    <Compile Include="Interval/IntervalDomain/Number.fs" />
+    <Compile Include="Interval/IntervalDomain/Interval.fs" />
+    <Compile Include="Interval/IntervalDomain/IntervalDomain.fs" />
 		<FsYacc Include="Parser/Parser.fsy">
 			<OtherFlags>--module Parser</OtherFlags>
 		</FsYacc>
@@ -25,9 +30,9 @@
     <Compile Include="Parser/Parser.fsi" />
     <Compile Include="Parser/Parser.fs" />
     <Compile Include="Parser/Lexer.fs" />
-    <Compile Include="AbstractState/AbstractState.fs" />
-    <Compile Include="Interval/IntervalDomain.fs" />
+    
     <Compile Include="Evaluator/Eval.fs" />
+    <Compile Include="Iteractive/Iteractive.fs" />
     <Compile Include="Program.fs" />
 
   </ItemGroup>
