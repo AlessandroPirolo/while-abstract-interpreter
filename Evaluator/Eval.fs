@@ -45,16 +45,18 @@ let rec eval (stmt : Statement) (state : Map<string, 'T>) (domain : AbstractDoma
         let eval_expr, _ = eval expr b domain it
         succ <- eval_expr
         un <- domain.union curr succ
+        printfn "%i" it
 
         if it > widening_delay
             then wide <- domain.var_wise_widening1 curr un
                  if wide = curr 
                     then fixpoint <- true
                     else curr <- wide
-            else  curr <- un
+            else if un = curr 
+                    then fixpoint <- true 
+                    else curr <- un
         it <- it + 1
         
-          
       let nar = domain.var_wise_narrowing curr succ
       let exit_cond = domain.eval_bexpr (BUnOp("!", bexpr)) nar 
 
