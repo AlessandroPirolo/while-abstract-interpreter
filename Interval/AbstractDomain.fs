@@ -3,7 +3,7 @@
 open Ast
 
 [<AbstractClass>]
-type AbstractDomain<'T>() = 
+type AbstractDomain<'T when 'T : equality>() = 
     // abstract member
     abstract member default_value: 'T
     abstract member empty_val: 'T
@@ -20,6 +20,15 @@ type AbstractDomain<'T>() =
     abstract member eval_incdec: 'T -> string -> 'T
 
     // concrete method
+    member this.check_emptiness (state : Map<string,'T>) : Map<string,'T> =
+        let f _ v : bool = 
+            match v with
+            | _ when v = this.empty_val -> true
+            | _ -> false
+        if Map.exists f state
+            then Map.empty
+            else state
+
     member this.find (k : string) (m : Map<string,'T>) : 'T = 
         match Map.tryFind k m with 
         | Some v -> v
@@ -28,17 +37,24 @@ type AbstractDomain<'T>() =
     member this.exists (k : string) (m : Map<string, 'T>) : bool = Map.exists (fun k1 _ -> k1 = k) m
 
     member this.union (m1 : Map<string,'T>) (m2 : Map<string,'T>) : Map<string,'T> = 
-        (m1, m2) ||> Map.fold (fun acc k v -> if this.exists k acc then Map.add k (this.lub (this.find k acc) v) acc else Map.add k v acc )
+        let un = (m1, m2) ||> Map.fold (fun acc k v -> if this.exists k acc then Map.add k (this.lub (this.find k acc) v) acc else Map.add k v acc )
+        this.check_emptiness un
 
     member this.intersect (m1 : Map<string,'T>) (m2 : Map<string,'T>) : Map<string,'T> = 
-        Map.fold (fun acc k v -> if this.exists k m2 then Map.add k v acc else acc) Map.empty m1
+        let inter = Map.fold (fun acc k v -> if this.exists k m2 then Map.add k (this.glb (this.find k acc) v) acc else acc) m2 m1
+        this.check_emptiness inter
 
-    member this.var_wise_widening s1 s2 = 
-        Map.fold (fun acc k v -> if this.exists k acc then Map.add k (this.widening (this.find k acc) v) acc else acc) s1 s2
-    
-    member this.var_wise_widening1 s1 s2 = Map.fold (fun acc k v -> if this.exists k acc then Map.add k (this.widening1 (this.find k acc) v) acc else acc) s1 s2
+    member this.var_wise_widening (s1 : Map<string,'T>) (s2 : Map<string,'T>) : Map<string,'T> = 
+        let w = Map.fold (fun acc k v -> if this.exists k acc then Map.add k (this.widening (this.find k acc) v) acc else acc) s1 s2
+        this.check_emptiness w
 
-    member this.var_wise_narrowing s1 s2 = Map.fold (fun acc k v -> Map.add k (this.narrowing (this.find k acc) v) acc) s1 s2
+    member this.var_wise_widening1 (s1 : Map<string,'T>) (s2 : Map<string,'T>) : Map<string,'T> = 
+        let w = Map.fold (fun acc k v -> if this.exists k acc then Map.add k (this.widening1 (this.find k acc) v) acc else acc) s1 s2
+        this.check_emptiness w
+
+    member this.var_wise_narrowing (s1 : Map<string,'T>) (s2 : Map<string,'T>) : Map<string,'T> = 
+        let n = Map.fold (fun acc k v -> Map.add k (this.narrowing (this.find k acc) v) acc) s1 s2
+        this.check_emptiness n
 
     member this.init_state (stmt : Statement) : Map<string,'T> =
         let rec find_var stmt = 
