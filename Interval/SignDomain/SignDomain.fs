@@ -28,7 +28,15 @@ type SignDomain() =
 
     override this.widening1 x y = y
     
-    override this.narrowing x y = y
+    override this.narrowing x y =
+        match x, y with
+        | Pos, Pos -> Pos
+        | Sign.Neg, Sign.Neg -> Sign.Neg
+        | Zero, Zero -> Zero
+        | _, Bottom
+        | Bottom, _ -> Bottom
+        | _ -> Top
+
 
     override this.eval_incdec (v : Sign) (op : string) : Sign =
         match op with
@@ -60,21 +68,22 @@ type SignDomain() =
         res
 
     override this.eval_bexpr (expr : Bexpr) (state : Map<string, Sign>) : Map<string, Sign> =
-        match expr with
-        | BConst true -> state
-        | BConst false -> Map.empty
-        | BUnOp (op, e) -> 
-            match op with
-            | "!" -> this.eval_neg e state
-            | _ -> Map.empty
-        | BBinOp (e1, op, e2) -> 
-            let res1 = this.eval_bexpr e1 state
-            let res2 = this.eval_bexpr e2 state
-            match op with
-            | "&&" -> this.intersect res1 res2
-            | "||" -> this.union res1 res2 
-            | _ -> state
-        | BoolRelation (e1, op, e2) -> this.eval_bool_rel e1 op e2 state
+        let res = match expr with
+                    | BConst true -> state
+                    | BConst false -> Map.empty
+                    | BUnOp (op, e) -> 
+                        match op with
+                        | "!" -> this.eval_neg e state
+                        | _ -> Map.empty
+                    | BBinOp (e1, op, e2) -> 
+                        let res1 = this.eval_bexpr e1 state
+                        let res2 = this.eval_bexpr e2 state
+                        match op with
+                        | "&&" -> this.intersect res1 res2
+                        | "||" -> this.union res1 res2 
+                        | _ -> state
+                    | BoolRelation (e1, op, e2) -> this.eval_bool_rel e1 op e2 state
+        this.check_emptiness res
 
     member this.eval_neg (bexpr : Bexpr) =
         match bexpr with
@@ -106,48 +115,23 @@ type SignDomain() =
         | "=" -> 
             match (aexpr1, aexpr2) with
             | AConst x, AConst y -> if x = y then state else Map.empty
-            | Var _, Var _ -> 
+            | _, _ -> 
                 let res1 = this.eval_aexpr aexpr1 state
                 let res2 = this.eval_aexpr aexpr2 state
                 if res1 =. res2 then 
                     state
                 else Map.empty
                 
-            | Var x, AConst c
-            | AConst c, Var x -> 
-                let res = this.eval_aexpr (Var x) state
-                match res with
-                | Pos ->
-                    if c < 0 then Map.empty else state
-                | Sign.Neg -> 
-                    if c > 0 then Map.empty else state
-                | Zero ->
-                    if c = 0 then state else Map.empty
-                | _ -> state
-                
-            | _ -> state
         | "!=" -> 
             match (aexpr1, aexpr2) with
             | AConst x, AConst y -> if x <> y then state else Map.empty
-            | Var _, Var _ -> 
+            | _, _ -> 
                 let res1 = this.eval_aexpr aexpr1 state
                 let res2 = this.eval_aexpr aexpr2 state 
                 if not (res1 =. res2) then 
                     state
                 else Map.empty
-                
-            | Var x, AConst c  
-            | AConst c, Var x -> 
-                let res = this.eval_aexpr (Var x) state
-                match res with
-                | Pos ->
-                    if c > 0 then Map.empty else state
-                | Sign.Neg -> 
-                    if c < 0 then Map.empty else state
-                | Zero ->
-                    if c = 0 then Map.empty else state
-                | _ -> state
-            | _ -> state
+          
       
         | ">" -> this.eval_bexpr (BoolRelation (ABinOp (aexpr2, "+", AConst 1), "<=", aexpr1)) state
         | ">=" -> this.eval_bexpr (BoolRelation (aexpr2, "<=", aexpr1)) state
@@ -155,18 +139,28 @@ type SignDomain() =
         | "<=" -> 
             match (aexpr1, aexpr2) with
             | AConst x, AConst y -> if x <= y then state else Map.empty
-            | Var x, Var y -> 
+            | Var _, Var _ 
+            | ABinOp _, ABinOp _
+            | Neg _, ABinOp _ 
+            | ABinOp _, Neg _ 
+            | Neg _, Neg _
+            | Neg _, Var _
+            | Var _, Neg _ 
+            | ABinOp _ , Var _
+            | Var _, ABinOp _ -> 
                 let res1 = this.eval_aexpr aexpr1 state 
                 let res2 = this.eval_aexpr aexpr2 state 
                 let x = 
                     match res2 with
                     | Zero
                     | Sign.Neg -> this.eval_bexpr (BoolRelation (aexpr1, "<=", AConst 0)) state
+                    | Bottom -> Map.empty
                     | _ -> state
                 let y = 
                     match res1 with
                     | Zero
                     | Pos -> this.eval_bexpr (BoolRelation (aexpr2, ">=", AConst 0)) state
+                    | Bottom -> Map.empty
                     | _ -> state
                 this.union x y
             | Var x, AConst c -> 
@@ -180,8 +174,22 @@ type SignDomain() =
                 | Sign.Neg ->
                     if c <= 0 then Map.add x Sign.Neg state
                     else state 
-                | Bottom -> Map.add x Bottom state
+                | Bottom -> Map.empty
             | AConst c, Var x -> 
                 this.eval_bexpr (BoolRelation (Ast.Neg aexpr2, "<=", Ast.Neg aexpr1)) state
-            | _ -> state
+            
+            | (ABinOp _ as r), AConst c
+            | AConst c, (ABinOp _ as r) 
+            | (Neg _ as r), AConst c
+            | AConst c, (Neg _ as r) ->
+                let res = this.eval_aexpr r state
+                match res with
+                | Pos
+                | Zero ->
+                    if c <= 0 then state else Map.empty
+                | Top
+                | Sign.Neg ->
+                    if c <= 0 then state else Map.empty
+                | Bottom -> Map.empty
+            
         | _ -> state

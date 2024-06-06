@@ -18,7 +18,7 @@ type Sign =
             | Zero, Zero -> Zero
             | Bottom, _ 
             | _, Bottom -> Bottom
-            | _, _ -> Top
+            | _ -> Top
 
         static member (-) (x, y) = 
             match x, y with
@@ -31,7 +31,7 @@ type Sign =
             | Zero, Zero -> Zero
             | Bottom, _ 
             | _, Bottom -> Bottom
-            | _, _ -> Top
+            | _ -> Top
 
         static member ( * ) (x, y) = 
             match x, y with
@@ -94,11 +94,11 @@ type Sign =
 
         static member (=.) (x, y) =
             match (x, y) with
-            | Neg, Neg
-            | Pos, Pos
-            | Zero, Zero 
+            | Zero, Zero -> true
+            (*| Pos, Pos
+            | Neg, Neg 
             | Top, Top
-            | Bottom, Bottom -> true
+            | Bottom, Bottom -> true*)
             | _ -> false
 
         member this.AbstractInc =

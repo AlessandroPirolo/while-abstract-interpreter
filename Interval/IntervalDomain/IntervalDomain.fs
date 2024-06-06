@@ -33,7 +33,7 @@ type IntervalDomain(lb : Number, ub : Number) =
             | Empty -> "Empty"
             | Z -> "T"
 
-    override this.widening x y = 
+    override this.widening1 x y = 
             match (x,y) with 
             | Interval (a, b), Interval(c, d) ->
                 let f = 
@@ -49,7 +49,7 @@ type IntervalDomain(lb : Number, ub : Number) =
             | (Empty|Z), Interval (_,_) -> y
             | _, _ -> x
 
-    override this.widening1 x y = 
+    override this.widening x y = 
             match (x,y) with 
             | Interval (a, b), Interval(c, d) ->
                 let f = 
@@ -96,21 +96,22 @@ type IntervalDomain(lb : Number, ub : Number) =
         this.check_interval res
 
     override this.eval_bexpr (expr : Bexpr) (state : Map<string, Interval>) : Map<string, Interval> =
-        match expr with
-        | BConst true -> state
-        | BConst false -> Map.empty
-        | BUnOp (op, e) -> 
-            match op with
-            | "!" -> this.eval_neg e state
-            | _ -> raise (Error "Unknown unary operator!")
-        | BBinOp (e1, op, e2) -> 
-            let res1 = this.eval_bexpr e1 state
-            let res2 = this.eval_bexpr e2 state
-            match op with
-            | "&&" -> this.intersect res1 res2
-            | "||" -> this.union res1 res2 
-            | _ -> state
-        | BoolRelation (e1, op, e2) -> this.eval_bool_rel e1 op e2 state
+        let res = match expr with
+                    | BConst true -> state
+                    | BConst false -> Map.empty
+                    | BUnOp (op, e) -> 
+                        match op with
+                        | "!" -> this.eval_neg e state
+                        | _ -> raise (Error "Unknown unary operator!")
+                    | BBinOp (e1, op, e2) -> 
+                        let res1 = this.eval_bexpr e1 state
+                        let res2 = this.eval_bexpr e2 state
+                        match op with
+                        | "&&" -> this.intersect res1 res2
+                        | "||" -> this.union res1 res2 
+                        | _ -> state
+                    | BoolRelation (e1, op, e2) -> this.eval_bool_rel e1 op e2 state
+        this.check_emptiness res
 
     member this.eval_neg (bexpr : Bexpr) =
         match bexpr with
@@ -139,6 +140,7 @@ type IntervalDomain(lb : Number, ub : Number) =
 
     member this.eval_bool_rel (aexpr1: Aexpr) (op: string) (aexpr2 : Aexpr) (state : Map<string, Interval>) : Map<string, Interval> = 
         match op with
+        (* EQUALITY *)
         | "=" -> 
             match (aexpr1, aexpr2) with
             | AConst x, AConst y -> if x = y then state else Map.empty
@@ -153,8 +155,10 @@ type IntervalDomain(lb : Number, ub : Number) =
                         let res = Interval.glb res1 res2
                         let s = Map.add x res state
                         Map.add y res s 
+                | Empty, _
+                | _, Empty -> Map.empty
                 | _ -> state
-            | Var x, AConst c -> 
+            | Var x, AConst c ->
                 let res = this.eval_aexpr aexpr1 state
                 match res with
                 | Interval (a, b) ->
@@ -164,6 +168,7 @@ type IntervalDomain(lb : Number, ub : Number) =
                         if Num (c) >. b then Map.empty
                         else 
                             Map.add x (Interval.glb res constInt) state
+                | Empty -> Map.empty
                 | _ -> state
             | AConst c, Var x -> 
                 let res = this.eval_aexpr aexpr2 state 
@@ -174,38 +179,131 @@ type IntervalDomain(lb : Number, ub : Number) =
                     else if Num c >. b then Map.empty
                     else 
                         Map.add x (Interval.glb res constInt) state
+                | Empty -> Map.empty
                 | _ -> state
-            | _ -> state
+            | ABinOp(_,_,_), ABinOp(_,_,_)
+            | Neg _, ABinOp _ 
+            | ABinOp _, Neg _ ->
+                let res1 = this.eval_aexpr aexpr1 state
+                let res2 = this.eval_aexpr aexpr2 state
+                if res1 =. res2 then state else Map.empty
+            | (ABinOp _ as r), Var x
+            | Var x, (ABinOp _ as r) ->
+                let e = this.eval_aexpr r state
+                let res = this.eval_aexpr (Var x) state
+                match (res, e) with
+                | Interval (a, b), Interval (c, d) ->
+                    if a >. d then Map.empty
+                    else if c >. b then Map.empty
+                    else
+                        let res = Interval.glb res e
+                        Map.add x res state
+                | Empty, _
+                | _, Empty -> Map.empty
+                | _ -> state
+            
+            | (ABinOp _ as r), AConst c
+            | AConst c, (ABinOp _ as r) ->
+                let e = this.eval_aexpr r state
+                match e with
+                | Interval (a, b) ->
+                    let constInt = Interval(Num c, Num c)
+                    if a >. Num c then Map.empty
+                    else
+                        if Num (c) >. b then Map.empty
+                        else 
+                            state
+                | Empty -> Map.empty
+                | _ -> state
+
+            | Neg _, Neg _ ->
+                let res1 = this.eval_aexpr aexpr1 state
+                let res2 = this.eval_aexpr aexpr2 state
+                if res1 =. res2 then state else Map.empty
+            | (Neg _ as n), Var x
+            | Var x, (Neg _ as n) ->
+                let e = this.eval_aexpr n state
+                let res = this.eval_aexpr (Var x) state
+                match (res, e) with
+                | Interval (a, b), Interval (c, d) ->
+                    if a >. d then Map.empty
+                    else if c >. b then Map.empty
+                    else
+                        let res = Interval.glb res e
+                        Map.add x res state
+                | Empty, _
+                | _, Empty -> Map.empty
+                | _ -> state
+            
+            | (Neg _ as n), AConst c
+            | AConst c, (Neg _ as n) ->
+                let e = this.eval_aexpr n state
+                match e with
+                | Interval (a, b) ->
+                    let constInt = Interval(Num c, Num c)
+                    if a >. Num c then Map.empty
+                    else
+                        if Num (c) >. b then Map.empty
+                        else 
+                            state
+                | Empty -> Map.empty
+                | _ -> state
+            
+                
+        
+        (* NON EQUALITY *)
         | "!=" -> 
             match (aexpr1, aexpr2) with
             | AConst x, AConst y -> if x <> y then state else Map.empty
-            | Var _, Var _ -> 
+            | Var _, Var _ 
+            | ABinOp _, ABinOp _
+            | ABinOp _, Var _
+            | Var _, ABinOp _ 
+            | Neg _, ABinOp _ 
+            | ABinOp _, Neg _
+            | Neg _, Neg _
+            | Neg _, Var _
+            | Var _, Neg _ ->
                 let res1 = this.eval_aexpr aexpr1 state
                 let res2 = this.eval_aexpr aexpr2 state 
                 match (res1, res2) with
                 | Interval (a, b), Interval (c, d) -> 
                     if a != c || b != d then state
                     else Map.empty
+                | Empty, _
+                | _, Empty -> Map.empty
                 | _ -> state
             | Var x, AConst c -> 
                 let res = this.eval_aexpr aexpr1 state
                 match res with 
                 | Interval (a, b) ->
-                    if Num c >. a && b >. Num c then 
-                        Map.empty
-                    else if a >. Num c || Num c >. b then state
-                    else 
-                        if Num c =. a && b >. Num c then 
-                            Map.add x (Interval((Num 1 + a), b)) state
-                        else 
-                            if Num c =. b && Num c >. a then 
-                                Map.add x (Interval(a, (b - Num 1))) state
-                            else 
-                                state
+                    if a != Num c || b != Num c then state
+                    else Map.empty
+                | Empty -> Map.empty
                 | _ -> state
             | AConst _, Var _ -> 
                 this.eval_bexpr (BoolRelation(aexpr2, "!=", aexpr1)) state
-            | _ -> state
+            
+            | (ABinOp _ as r), AConst c
+            | AConst c, (ABinOp _ as r) ->
+                let e = this.eval_aexpr r state
+                match e with
+                | Interval (a, b) ->
+                    if a != Num c || b != Num c then state
+                    else Map.empty
+                | Empty -> Map.empty
+                | _ -> state
+               
+            
+            | (Neg _ as n), AConst c
+            | AConst c, (Neg _ as n) ->
+                let e = this.eval_aexpr n state
+                match e with
+                | Interval (a, b) ->
+                    if a != Num c || b != Num c then state
+                    else Map.empty
+                | Empty -> Map.empty
+                | _ -> state
       
         | ">" -> 
             match (aexpr1, aexpr2) with
@@ -217,24 +315,62 @@ type IntervalDomain(lb : Number, ub : Number) =
                 | Interval (a, b), Interval (c, d) ->
                     if b <=. c then Map.empty
                     else
-                        let s = Map.add x (Interval (Number.max [a; c + Num 1], b)) state // check
-                        Map.add y (Interval (c,Number.min [b - Num 1; d])) s  // Check
+                        let s = Map.add x (Interval (Number.max [a; c + Num 1], b)) state 
+                        Map.add y (Interval (c,Number.min [b - Num 1; d])) s  
+                | Empty, _
+                | _, Empty -> Map.empty
                 | _ -> state
             | Var x, AConst c -> 
                 let res = this.eval_aexpr aexpr1 state
                 match res with
                 | Interval (a, b) ->
                     if b <=. Num c then Map.empty
-                    else Map.add x (Interval (Number.max [a; Num c + Num 1], b)) state // check
+                    else Map.add x (Interval (Number.max [a; Num c + Num 1], b)) state 
+                | Empty -> Map.empty
                 | _ -> state
             | AConst c, Var x -> 
                 let res = this.eval_aexpr aexpr2 state 
                 match res with
                 | Interval (a, b) ->
                     if Num c <=. a then Map.empty
-                    else Map.add x (Interval (a, Number.min [b; Num c - Num 1])) state // check
+                    else Map.add x (Interval (a, Number.min [b; Num c - Num 1])) state 
+                | Empty -> Map.empty
                 | _ -> state
-            | _ -> state
+            | ABinOp _, ABinOp _
+            | Neg _, ABinOp _ 
+            | Neg _, Neg _
+            | ABinOp _, Neg _ ->
+                let res1 = this.eval_aexpr aexpr1 state
+                let res2 = this.eval_aexpr aexpr2 state
+                if res1 > res2 then state else Map.empty
+            | (Neg _ as r), Var x
+            | Var x, (Neg _ as r)
+            | (ABinOp _ as r), Var x
+            | Var x, (ABinOp _ as r) ->
+                let e = this.eval_aexpr r state
+                let res = this.eval_aexpr (Var x) state
+                match (res, e) with
+                | Interval (a, b), Interval (c, _) ->
+                    if b <=. c then Map.empty
+                    else
+                        Map.add x (Interval (Number.max [a; c + Num 1], b)) state
+                | Empty, _
+                | _, Empty -> Map.empty
+                | _ -> state
+            
+            | (ABinOp _ as r), AConst c
+            | (Neg _ as r), AConst c
+            | AConst c, (Neg _ as r)
+            | AConst c, (ABinOp _ as r) ->
+                let res = this.eval_aexpr r state 
+                match res with
+                | Interval (a, _) ->
+                    if Num c <=. a then Map.empty
+                    else state
+                | Empty -> Map.empty
+                | _ -> state
+
+
         | ">=" -> this.eval_bexpr (BoolRelation (aexpr2, "<=", aexpr1)) state
         | "<" -> this.eval_bexpr (BoolRelation (aexpr2, ">", aexpr1)) state
         | "<=" -> 
@@ -249,22 +385,59 @@ type IntervalDomain(lb : Number, ub : Number) =
                     else
                         let s = Map.add x (Interval (a, Number.min [ b; d ])) state 
                         Map.add y (Interval (Number.max [ c; a ], d)) s
+                | Empty, _
+                | _, Empty -> Map.empty
                 | _ -> state
             | Var x, AConst c -> 
                 let res = this.eval_aexpr aexpr1 state
                 match res with
                 | Interval (a, b) ->
                     if a >. Num c then Map.empty
-                    else Map.add x (Interval (a, Number.min [ b; Num c ])) state  
+                    else Map.add x (Interval (a, Number.min [ b; Num c ])) state 
+                | Empty -> Map.empty
                 | _ -> state
             | AConst c, Var x -> 
                 let res = this.eval_aexpr aexpr2 state 
                 match res with
                 | Interval (a, b) ->
                     if Num c >. b then Map.empty
-                    else Map.add x (Interval (Number.max [ a; Num c ], b)) state
+                    else
+                        Map.add x (Interval (Number.max [ a; Num c ], b)) state
+                | Empty -> Map.empty
                 | _ -> state
-            | _ -> state
+            | ABinOp _, ABinOp _
+            | Neg _, ABinOp _ 
+            | Neg _, Neg _
+            | ABinOp _, Neg _ ->
+                let res1 = this.eval_aexpr aexpr1 state
+                let res2 = this.eval_aexpr aexpr2 state
+                if res1 <= res2 then state else Map.empty
+            | (Neg _ as r), Var x
+            | Var x, (Neg _ as r)
+            | (ABinOp _ as r), Var x
+            | Var x, (ABinOp _ as r) ->
+                let e = this.eval_aexpr r state
+                let res = this.eval_aexpr (Var x) state
+                match (res, e) with
+                | Interval (a, b), Interval (_, d) ->
+                    if a >. d then Map.empty
+                    else
+                        Map.add x (Interval (a, Number.min [ b; d ])) state
+                | Empty, _
+                | _, Empty -> Map.empty
+                | _ -> state
+            
+            | (ABinOp _ as r), AConst c
+            | (Neg _ as r), AConst c
+            | AConst c, (Neg _ as r)
+            | AConst c, (ABinOp _ as r) ->
+                let res = this.eval_aexpr r state 
+                match res with
+                | Interval (_, b) ->
+                    if Num c >. b then Map.empty
+                    else state
+                | Empty -> Map.empty
+                | _ -> state
         | _ -> state
 
 

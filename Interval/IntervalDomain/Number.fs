@@ -54,6 +54,7 @@ with
             | Num _, MinInf -> MinInf
 
         static member ( / ) (n1, n2) =
+            printf "%A %A" n1 n2 
             match (n1, n2) with
             | Num 0, _ -> Num 0
             | _, Num 0 -> raise (Error "Division by 0 not allowed!")
@@ -70,14 +71,10 @@ with
         static member ( <=. ) (n1, n2) =
             match (n1, n2) with
             | Num n1, Num n2 -> n1 <= n2
-            | MinInf, PlusInf -> true
-            | MinInf, MinInf -> true
-            | MinInf, Num _ -> true
-            | Num _, MinInf -> false
-            | PlusInf, MinInf -> false
-            | PlusInf, Num _ -> false
-            | Num _, PlusInf -> true
-            | PlusInf, PlusInf -> true
+            | MinInf, _ -> true
+            | _ , MinInf -> false
+            | PlusInf, _ -> false
+            | _, PlusInf -> true
 
         static member ( >. ) (n1, n2) =
             match (n1, n2) with

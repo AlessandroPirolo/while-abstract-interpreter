@@ -11,7 +11,9 @@ type Interval =
         static member lub x y =
             match (x, y) with
             | Interval (a, b), Interval (c, d) -> Interval (Number.min [a; c], Number.max [b; d])
-            | _, _ -> Empty
+            | Empty, _ -> y
+            | _, Empty -> x
+            | _ -> Z
 
         static member glb x y =
             match (x, y) with
@@ -61,16 +63,19 @@ type Interval =
         static member ( / ) (x, y) =
             match (x, y) with
             | Interval (a, b), Interval (c, d) ->
-                let ac = a / c 
-                let ad = a / d 
-                let bc = b / c 
-                let bd = b / d 
-
                 if Number.Num 1 <= c then
+                    let ac = a / c 
+                    let ad = a / d 
+                    let bc = b / c 
+                    let bd = b / d 
                     let mi = Number.min [ ac; ad ] 
                     let ma = Number.max [ bc; bd ] 
                     Interval (mi, ma)
                 else if d <= Num (-1) then
+                    let ac = a / c 
+                    let ad = a / d 
+                    let bc = b / c 
+                    let bd = b / d 
                     let ma = Number.max [ ac; ad ] 
                     let mi = Number.min [ bc; bd ] 
                     Interval (mi, ma)
@@ -78,7 +83,8 @@ type Interval =
                     let y1 = Interval (Num 1, PlusInf) 
                     let y2 = Interval (MinInf, Num (-1)) 
                     Interval.lub (x / Interval.glb y y1) (x / Interval.glb y y2)
-            | Empty, _ -> Empty
+            | Empty, _
+            | _, Empty -> Empty
             | Z, _ 
             | _,_ -> Z
 
